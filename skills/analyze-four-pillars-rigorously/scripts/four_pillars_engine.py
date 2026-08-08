@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.metadata
-import importlib.resources
 import json
 import math
 import os
@@ -20,20 +18,21 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
 
-ENGINE_VERSION = "0.1.0"
-RULESET_VERSION = "xuanshu-audit-v0.1"
+ENGINE_VERSION = "0.1.1"
+RULESET_VERSION = "xuanshu-audit-v0.1.1"
 SUPPORTED_YEAR_MIN = 1901
 SUPPORTED_YEAR_MAX = 2033
 SUPPORTED_LUNAR_YEAR_MIN = 1900
 SUPPORTED_LUNAR_YEAR_MAX = 2033
 CALENDAR_FRAME_YEAR_MIN = 1900
 CALENDAR_FRAME_YEAR_MAX = 2034
-EXPECTED_TZDATA_PACKAGE_VERSION = "2026.3"
+EXPECTED_TZDATA_BUNDLE_VERSION = "2026.3"
 EXPECTED_TZDB_VERSION = "2026c"
 MAX_TZIF_BYTES = 4 * 1024 * 1024
 MAX_JSON_INPUT_BYTES = 1024 * 1024
@@ -143,10 +142,19 @@ CORE_INPUT_ERROR_CODES = frozenset({
 SCRIPT_DIR = Path(__file__).resolve().parent
 NODE_CORE = SCRIPT_DIR / "four_pillars_core.js"
 CALENDAR_DATA = SCRIPT_DIR / "data" / "calendar-1901-2033.json"
+VENDORED_TZDATA_ROOT = SCRIPT_DIR / "vendor" / "tzdata-2026.3" / "zoneinfo"
+TZDATA_BUNDLE_MANIFEST = SCRIPT_DIR / "vendor" / "tzdata-2026.3" / "MANIFEST.json"
 # Release-pinned artifact digests. Future replacement requires reviewed
 # regeneration, a ruleset/version bump, and a corresponding validation update.
 NODE_CORE_SHA256 = "8b3cb09cd9468ab9bfb6c199c58fd053f1e025fca2ac059fe7ee846755773655"
 CALENDAR_DATA_SHA256 = "65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509"
+TZDATA_BUNDLE_MANIFEST_SHA256 = "623879126f592375003fac137d7940dbd41b55b2e2972e1586f7680ba03efa1f"
+TZDATA_UPSTREAM_WHEEL_URL = (
+    "https://files.pythonhosted.org/packages/e5/6d/"
+    "b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/"
+    "tzdata-2026.3-py2.py3-none-any.whl"
+)
+TZDATA_UPSTREAM_WHEEL_SHA256 = "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931"
 REFERENCE_DIR = SCRIPT_DIR.parent / "references"
 MANIFEST_HASHES = {
     "rule_registry": (
@@ -159,7 +167,7 @@ MANIFEST_HASHES = {
     ),
     "provenance_manifest": (
         REFERENCE_DIR / "provenance-manifest.json",
-        "3a219920f4d9b373e415ca2c767740aecd7bc133682a4cd147cfa7235598af28",
+        "36002ef771d41744c73f4e9f7766a98539e26a7ee601729e239c8b772bd8f6b8",
     ),
 }
 
@@ -224,17 +232,79 @@ def verify_node_core() -> str:
 def load_manifest_identity() -> dict[str, dict[str, str]]:
     identity: dict[str, dict[str, str]] = {}
     for name, (path, expected) in MANIFEST_HASHES.items():
-        actual = sha256_file(path)
+        payload = path.read_bytes()
+        actual = hashlib.sha256(payload).hexdigest()
         if actual != expected:
             raise RuntimeError(
                 f"{name} integrity check failed; update the ruleset version and pinned hash"
             )
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(payload.decode("utf-8"))
         schema = value.get("schema_version")
         if not isinstance(schema, str) or not schema:
             raise RuntimeError(f"{name} has no valid schema_version")
         identity[name] = {"schema_version": schema, "sha256": actual}
     return identity
+
+
+def load_tzdata_bundle_manifest() -> dict[str, dict[str, int | str]]:
+    if not TZDATA_BUNDLE_MANIFEST.is_file():
+        raise RuntimeError("Bundled timezone manifest is missing")
+    try:
+        payload = TZDATA_BUNDLE_MANIFEST.read_bytes()
+    except OSError as exc:
+        raise RuntimeError("Bundled timezone manifest is unreadable") from exc
+    actual = hashlib.sha256(payload).hexdigest()
+    if actual != TZDATA_BUNDLE_MANIFEST_SHA256:
+        raise RuntimeError("Bundled timezone manifest integrity check failed")
+    try:
+        value = json.loads(payload.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Bundled timezone manifest is unreadable") from exc
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != "xuanshu-tzdata-bundle-v0.1"
+        or value.get("python_distribution_version") != EXPECTED_TZDATA_BUNDLE_VERSION
+        or value.get("iana_database_version") != EXPECTED_TZDB_VERSION
+        or value.get("upstream_artifact") != {
+            "filename": "tzdata-2026.3-py2.py3-none-any.whl",
+            "url": TZDATA_UPSTREAM_WHEEL_URL,
+            "sha256": TZDATA_UPSTREAM_WHEEL_SHA256,
+        }
+        or not isinstance(value.get("files"), dict)
+    ):
+        raise RuntimeError("Bundled timezone manifest identity is invalid")
+    return value["files"]
+
+
+def verify_tzdata_bundle_file(
+    path: Path,
+    relative: str,
+    files: dict[str, dict[str, int | str]],
+) -> tuple[bytes, str]:
+    if not path.is_file():
+        raise RuntimeError(f"Bundled timezone file is missing: {relative}")
+    entry = files.get(relative)
+    if not isinstance(entry, dict):
+        raise RuntimeError(f"Bundled timezone file is absent from its manifest: {relative}")
+    expected_size = entry.get("size")
+    expected_sha256 = entry.get("sha256")
+    if (
+        isinstance(expected_size, bool)
+        or not isinstance(expected_size, int)
+        or not isinstance(expected_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is None
+    ):
+        raise RuntimeError(f"Bundled timezone manifest entry is invalid: {relative}")
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeError(f"Bundled timezone file is unreadable: {relative}") from exc
+    if len(payload) != expected_size:
+        raise RuntimeError(f"Bundled timezone file size check failed: {relative}")
+    actual = hashlib.sha256(payload).hexdigest()
+    if actual != expected_sha256:
+        raise RuntimeError(f"Bundled timezone file integrity check failed: {relative}")
+    return payload, actual
 
 
 def load_frozen_zone(key: str) -> ZoneBundle:
@@ -248,40 +318,44 @@ def load_frozen_zone(key: str) -> ZoneBundle:
         for part in parts
     ):
         raise InputContractError("birth.timezone contains an invalid IANA path component")
-    try:
-        package_version = importlib.metadata.version("tzdata")
-        if package_version != EXPECTED_TZDATA_PACKAGE_VERSION:
-            raise InputContractError(
-                "Frozen timezone dependency mismatch: "
-                f"expected tzdata {EXPECTED_TZDATA_PACKAGE_VERSION}, received {package_version}"
-            )
-        root = Path(str(importlib.resources.files("tzdata").joinpath("zoneinfo"))).resolve()
-        zone_path = root.joinpath(*parts).resolve()
-        try:
-            zone_path.relative_to(root)
-        except ValueError as exc:
-            raise InputContractError("birth.timezone escaped the frozen timezone root") from exc
-        if not zone_path.is_file():
-            raise InputContractError(f"Unknown IANA timezone: {key}")
-        size = zone_path.stat().st_size
-        if not 1 <= size <= MAX_TZIF_BYTES:
-            raise InputContractError(f"Invalid or oversized TZif file for timezone: {key}")
-        try:
-            with zone_path.open("rb") as handle:
-                zone = ZoneInfo.from_file(handle, key=key)
-        except (OSError, ValueError) as exc:
-            raise InputContractError(f"Invalid TZif data for timezone: {key}") from exc
-        version_line = root.joinpath("tzdata.zi").read_text(encoding="utf-8").splitlines()[0]
-        version = version_line.removeprefix("# version ").strip()
-        if version != EXPECTED_TZDB_VERSION:
-            raise InputContractError(
-                f"Frozen tzdb mismatch: expected {EXPECTED_TZDB_VERSION}, received {version}"
-            )
-        return ZoneBundle(zone, "python-tzdata-frozen", version, sha256_file(zone_path))
-    except ModuleNotFoundError as exc:
+    root = VENDORED_TZDATA_ROOT.resolve()
+    if not root.is_dir():
         raise InputContractError(
-            f"tzdata=={EXPECTED_TZDATA_PACKAGE_VERSION} is required; system-zoneinfo fallback is disabled"
-        ) from exc
+            f"Bundled tzdata {EXPECTED_TZDATA_BUNDLE_VERSION} is missing; "
+            "system-zoneinfo fallback is disabled"
+        )
+    zone_path = root.joinpath(*parts).resolve()
+    try:
+        zone_path.relative_to(root)
+    except ValueError as exc:
+        raise InputContractError("birth.timezone escaped the frozen timezone root") from exc
+    if not zone_path.is_file():
+        raise InputContractError(f"Unknown IANA timezone: {key}")
+    manifest_files = load_tzdata_bundle_manifest()
+    zone_bytes, zone_sha256 = verify_tzdata_bundle_file(
+        zone_path, "/".join(parts), manifest_files
+    )
+    size = len(zone_bytes)
+    if not 1 <= size <= MAX_TZIF_BYTES:
+        raise InputContractError(f"Invalid or oversized TZif file for timezone: {key}")
+    try:
+        zone = ZoneInfo.from_file(BytesIO(zone_bytes), key=key)
+    except ValueError as exc:
+        raise InputContractError(f"Invalid TZif data for timezone: {key}") from exc
+    try:
+        version_path = root.joinpath("tzdata.zi")
+        version_bytes, _ = verify_tzdata_bundle_file(
+            version_path, "tzdata.zi", manifest_files
+        )
+        version_line = version_bytes.decode("utf-8").splitlines()[0]
+    except (IndexError, UnicodeError) as exc:
+        raise InputContractError("Bundled tzdata version marker is unreadable") from exc
+    version = version_line.removeprefix("# version ").strip()
+    if version != EXPECTED_TZDB_VERSION:
+        raise InputContractError(
+            f"Frozen tzdb mismatch: expected {EXPECTED_TZDB_VERSION}, received {version}"
+        )
+    return ZoneBundle(zone, "bundled-tzdata-frozen", version, zone_sha256)
 
 
 def parse_date(value: str) -> date:
@@ -293,7 +367,7 @@ def parse_date(value: str) -> date:
         raise InputContractError("birth.date must use YYYY-MM-DD") from exc
     if not SUPPORTED_YEAR_MIN <= parsed.year <= SUPPORTED_YEAR_MAX:
         raise InputContractError(
-            f"Supported development range is {SUPPORTED_YEAR_MIN}-{SUPPORTED_YEAR_MAX}; received {parsed.year}"
+            f"Supported calculation range is {SUPPORTED_YEAR_MIN}-{SUPPORTED_YEAR_MAX}; received {parsed.year}"
         )
     return parsed
 
@@ -2818,7 +2892,8 @@ def build_report(payload: dict[str, Any]) -> dict[str, Any]:
                 "orchestrator_sha256": orchestrator_sha256,
                 "node_core_sha256": node_core_sha256,
                 "calendar_dataset_sha256": calendar_data_sha256,
-                "tzdata_package": EXPECTED_TZDATA_PACKAGE_VERSION,
+                "tzdata_bundle": EXPECTED_TZDATA_BUNDLE_VERSION,
+                "tzdata_bundle_manifest_sha256": TZDATA_BUNDLE_MANIFEST_SHA256,
                 "tzdb": EXPECTED_TZDB_VERSION,
                 "manifests": manifest_identity,
             },
@@ -2854,11 +2929,9 @@ def build_report(payload: dict[str, Any]) -> dict[str, Any]:
                 "version": bundle.version,
                 "zone": bundle.zone.key,
                 "zone_file_sha256": bundle.sha256,
-                "python_package_version": (
-                    importlib.metadata.version("tzdata")
-                    if bundle.source == "python-tzdata-frozen"
-                    else None
-                ),
+                "bundle_version": EXPECTED_TZDATA_BUNDLE_VERSION,
+                "bundle_manifest_sha256": TZDATA_BUNDLE_MANIFEST_SHA256,
+                "upstream_wheel_sha256": TZDATA_UPSTREAM_WHEEL_SHA256,
             },
         },
         "input_contract": {

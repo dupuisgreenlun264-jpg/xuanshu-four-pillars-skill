@@ -8,10 +8,15 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
+import zipfile
 from datetime import date
 from pathlib import Path
 from typing import Any
+from unittest import mock
+
+import tools.build_plugin_archive as plugin_builder
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,12 +28,19 @@ NODE_CORE = SCRIPTS / "four_pillars_core.js"
 CALENDAR_DATA = SCRIPTS / "data" / "calendar-1901-2033.json"
 GENERATOR = ROOT / "tools" / "generate_calendar_data.py"
 BUILD_REQUIREMENTS = ROOT / "tools" / "calendar-build-requirements.txt"
+ARCHIVE_BUILDER = ROOT / "tools" / "build_plugin_archive.py"
+TZDATA_MANIFEST_GENERATOR = ROOT / "tools" / "generate_tzdata_manifest.py"
+TZDATA_BUNDLE = SCRIPTS / "vendor" / "tzdata-2026.3"
+TZDATA_ROOT = TZDATA_BUNDLE / "zoneinfo"
+TZDATA_MANIFEST = TZDATA_BUNDLE / "MANIFEST.json"
 
 EXPECTED_ARTIFACT_SHA256 = {
     NODE_CORE: "8b3cb09cd9468ab9bfb6c199c58fd053f1e025fca2ac059fe7ee846755773655",
     CALENDAR_DATA: "65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509",
     GENERATOR: "6f30b0579347cedfade4077e407dfaabd94f9819125c61d89bd2c014fc735405",
     BUILD_REQUIREMENTS: "6cfa326d743d96c47739eedd1acafb642ce0abdb4dc91d256d05755e8908f4d8",
+    TZDATA_MANIFEST_GENERATOR: "3d25f365817e054f0cc10fe9ea2d2467dfd58c723424268e30185a741df76cd8",
+    TZDATA_MANIFEST: "623879126f592375003fac137d7940dbd41b55b2e2972e1586f7680ba03efa1f",
 }
 
 
@@ -100,6 +112,8 @@ class RepositoryTests(unittest.TestCase):
             relative = path.relative_to(ROOT)
             if ".git" in relative.parts:
                 continue
+            if relative.parts and relative.parts[0] in {"build", "dist", "reports"}:
+                continue
             encoded_path = relative.as_posix().encode("utf-8").lower()
             if forbidden in encoded_path:
                 matches.append(relative.as_posix())
@@ -123,6 +137,11 @@ class RepositoryTests(unittest.TestCase):
             SKILL / "references" / "provenance-manifest.json",
             GENERATOR,
             BUILD_REQUIREMENTS,
+            ARCHIVE_BUILDER,
+            TZDATA_MANIFEST_GENERATOR,
+            TZDATA_MANIFEST,
+            TZDATA_BUNDLE / "LICENSE",
+            TZDATA_BUNDLE / "LICENSE_APACHE",
         ]
         for path in required:
             self.assertTrue(path.is_file(), path)
@@ -130,7 +149,7 @@ class RepositoryTests(unittest.TestCase):
     def test_plugin_manifest_and_marketplace_contract(self) -> None:
         manifest = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual("xuanshu-four-pillars", manifest["name"])
-        self.assertEqual("0.1.0", manifest["version"])
+        self.assertEqual("0.1.1", manifest["version"])
         self.assertEqual("MIT", manifest["license"])
         self.assertEqual(
             "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
@@ -147,11 +166,20 @@ class RepositoryTests(unittest.TestCase):
 
         interface = manifest["interface"]
         self.assertEqual("玄枢·严谨四柱", interface["displayName"])
-        self.assertEqual("Productivity", interface["category"])
+        self.assertEqual("Education & Research", interface["category"])
         self.assertRegex(interface["brandColor"], r"^#[0-9A-Fa-f]{6}$")
-        self.assertGreaterEqual(len(interface["defaultPrompt"]), 3)
-        self.assertIn("开发验证版", interface["longDescription"])
-        self.assertIn("不提供经科学验证的人生预测", interface["longDescription"])
+        self.assertRegex(interface["brandColorDark"], r"^#[0-9A-Fa-f]{6}$")
+        self.assertEqual(3, len(interface["defaultPrompt"]))
+        self.assertEqual(4, len(interface["capabilities"]))
+        self.assertEqual(manifest["author"]["name"], interface["developerName"])
+        self.assertIn("尚未独立认证", interface["longDescription"])
+        self.assertIn("人生预测未获实证验证", interface["longDescription"])
+        for field in ("websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL"):
+            self.assertTrue(interface[field].startswith("https://"), field)
+        for field in ("logo", "composerIcon"):
+            asset = (ROOT / interface[field]).resolve()
+            self.assertTrue(asset.is_relative_to(ROOT.resolve()))
+            self.assertTrue(asset.is_file(), field)
 
         marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
         self.assertEqual("xuanshu-plugins", marketplace["name"])
@@ -171,6 +199,199 @@ class RepositoryTests(unittest.TestCase):
             {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
             entry["policy"],
         )
+
+    def test_public_directory_archive_is_deterministic_and_skills_only(self) -> None:
+        check = subprocess.run(
+            [sys.executable, str(ARCHIVE_BUILDER), "--check-only"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+        self.assertEqual(0, check.returncode, check.stderr)
+        self.assertTrue(check.stdout.startswith("PASS:"), check.stdout)
+
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first.zip"
+            second = Path(directory) / "second.zip"
+            for output in (first, second):
+                process = subprocess.run(
+                    [sys.executable, str(ARCHIVE_BUILDER), "--output", str(output)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=30,
+                )
+                self.assertEqual(0, process.returncode, process.stderr)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+
+            with zipfile.ZipFile(first) as archive:
+                names = archive.namelist()
+                extracted_bytes = sum(item.file_size for item in archive.infolist())
+            self.assertEqual(1, names.count(".codex-plugin/plugin.json"))
+            self.assertIn("skills/analyze-four-pillars-rigorously/SKILL.md", names)
+            self.assertNotIn("requirements.txt", names)
+            self.assertNotIn(".agents/plugins/marketplace.json", names)
+            self.assertFalse(any(name.startswith(("docs/", "tests/", ".github/")) for name in names))
+
+            validation = (ROOT / "docs" / "VALIDATION.md").read_text(encoding="utf-8")
+            expected: dict[str, str] = {}
+            for field in (
+                "candidate_archive_sha256",
+                "candidate_archive_compressed_bytes",
+                "candidate_archive_extracted_bytes",
+                "candidate_archive_entries",
+            ):
+                match = re.search(rf"^{field}: (\S+)$", validation, flags=re.MULTILINE)
+                self.assertIsNotNone(match, field)
+                expected[field] = match.group(1)
+
+            archive_sha256 = hashlib.sha256(first.read_bytes()).hexdigest()
+            compressed_bytes = first.stat().st_size
+            self.assertEqual(expected["candidate_archive_sha256"], archive_sha256)
+            self.assertEqual(int(expected["candidate_archive_compressed_bytes"]), compressed_bytes)
+            self.assertEqual(int(expected["candidate_archive_extracted_bytes"]), extracted_bytes)
+            self.assertEqual(int(expected["candidate_archive_entries"]), len(names))
+
+            submission = (ROOT / "docs" / "PLUGIN-SUBMISSION.md").read_text(encoding="utf-8")
+            self.assertIn(f"`{archive_sha256}`", submission)
+            self.assertIn(f"{compressed_bytes:,} bytes", submission)
+            self.assertIn(f"{extracted_bytes:,} bytes", submission)
+            self.assertIn(f"| Entries | {len(names)} |", submission)
+
+            candidate = ROOT / "dist" / "xuanshu-four-pillars-plugin-0.1.1.zip"
+            if candidate.is_file():
+                self.assertEqual(first.read_bytes(), candidate.read_bytes())
+
+    def test_public_directory_preflight_rejects_mutated_skill_metadata(self) -> None:
+        skill_source = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        agent_source = (SKILL / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        icon_source = (SKILL / "assets" / "icon.svg").read_bytes()
+
+        with tempfile.TemporaryDirectory() as directory:
+            temporary_root = Path(directory)
+            temporary_skill = temporary_root / "skills" / SKILL.name
+            (temporary_skill / "agents").mkdir(parents=True)
+            (temporary_skill / "assets").mkdir()
+            skill_path = temporary_skill / "SKILL.md"
+            agent_path = temporary_skill / "agents" / "openai.yaml"
+            skill_path.write_text(skill_source, encoding="utf-8")
+            agent_path.write_text(agent_source, encoding="utf-8")
+            (temporary_skill / "assets" / "icon.svg").write_bytes(icon_source)
+
+            with (
+                mock.patch.object(plugin_builder, "ROOT", temporary_root),
+                mock.patch.object(plugin_builder, "SKILLS_ROOT", temporary_root / "skills"),
+            ):
+                self.assertEqual([SKILL.name], plugin_builder.skill_names())
+
+                without_description = re.sub(
+                    r"^description: .*\n",
+                    "",
+                    skill_source,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+                skill_path.write_text(without_description, encoding="utf-8")
+                with self.assertRaisesRegex(plugin_builder.PreflightError, "name and description"):
+                    plugin_builder.skill_names()
+
+                invalid_yaml = re.sub(
+                    r"^description: .*\n",
+                    "description: [unterminated\n",
+                    skill_source,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+                skill_path.write_text(invalid_yaml, encoding="utf-8")
+                with self.assertRaisesRegex(plugin_builder.PreflightError, "Unsafe plain YAML scalar"):
+                    plugin_builder.skill_names()
+
+                null_description = re.sub(
+                    r"^description: .*\n",
+                    "description: null\n",
+                    skill_source,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+                skill_path.write_text(null_description, encoding="utf-8")
+                with self.assertRaisesRegex(plugin_builder.PreflightError, "Unsafe plain YAML scalar"):
+                    plugin_builder.skill_names()
+
+                skill_path.write_text(skill_source, encoding="utf-8")
+                without_skill_reference = re.sub(
+                    r'^  default_prompt: .+$',
+                    '  default_prompt: "请生成可审计四柱报告。"',
+                    agent_source,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+                agent_path.write_text(without_skill_reference, encoding="utf-8")
+                with self.assertRaisesRegex(plugin_builder.PreflightError, "explicitly mention"):
+                    plugin_builder.skill_names()
+
+                agent_path.write_text(agent_source, encoding="utf-8")
+                (temporary_skill / "assets" / "icon.svg").write_text(
+                    '<notsvg width="64" height="64" viewBox="0 0 64 64"/>\n',
+                    encoding="utf-8",
+                )
+                with self.assertRaisesRegex(plugin_builder.PreflightError, "root element must be svg"):
+                    plugin_builder.skill_names()
+
+    def test_public_directory_submission_materials_have_exact_review_case_shape(self) -> None:
+        submission = (ROOT / "docs" / "PLUGIN-SUBMISSION.md").read_text(encoding="utf-8")
+        positives = re.findall(r"^### P[1-5] — .*?(?=^### P|^## Negative)", submission, flags=re.MULTILINE | re.DOTALL)
+        negatives = re.findall(r"^### N[1-3] — .*?(?=^### N|^## Build)", submission, flags=re.MULTILINE | re.DOTALL)
+        self.assertEqual(5, len(positives))
+        self.assertEqual(3, len(negatives))
+        for case in positives:
+            self.assertIn("Prompt:", case)
+            self.assertIn("Expected behavior:", case)
+            self.assertIn("Expected result shape:", case)
+            self.assertIn("Fixture/account:", case)
+        for case in negatives:
+            self.assertIn("Prompt:", case)
+            self.assertIn("Expected refusal/clarification/safe fallback:", case)
+            self.assertIn("Why the Plugin should not complete it:", case)
+            self.assertIn("Fixture/account:", case)
+
+        privacy = (ROOT / "docs" / "PRIVACY.md").read_text(encoding="utf-8")
+        for heading in ("## Data categories", "## Recipients", "## Retention and deletion", "## User controls"):
+            self.assertIn(heading, privacy)
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("finally`-equivalent cleanup", skill_text)
+
+    def test_bundled_tzdata_manifest_covers_every_distributed_file(self) -> None:
+        manifest = json.loads(TZDATA_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual("xuanshu-tzdata-bundle-v0.1", manifest["schema_version"])
+        self.assertEqual("2026.3", manifest["python_distribution_version"])
+        self.assertEqual("2026c", manifest["iana_database_version"])
+        self.assertEqual(
+            {
+                "filename": "tzdata-2026.3-py2.py3-none-any.whl",
+                "url": (
+                    "https://files.pythonhosted.org/packages/e5/6d/"
+                    "b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/"
+                    "tzdata-2026.3-py2.py3-none-any.whl"
+                ),
+                "sha256": "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931",
+            },
+            manifest["upstream_artifact"],
+        )
+        entries = manifest["files"]
+        actual = {
+            path.relative_to(TZDATA_ROOT).as_posix()
+            for path in TZDATA_ROOT.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(set(entries), actual)
+        self.assertGreaterEqual(len(entries), 600)
+        for relative, metadata in entries.items():
+            path = TZDATA_ROOT / relative
+            self.assertFalse(path.is_symlink(), relative)
+            self.assertEqual(metadata["size"], path.stat().st_size, relative)
+            self.assertEqual(metadata["sha256"], hashlib.sha256(path.read_bytes()).hexdigest(), relative)
+        self.assertTrue((TZDATA_ROOT / "tzdata.zi").read_text(encoding="utf-8").startswith("# version 2026c\n"))
 
     def test_frozen_clean_core_artifact_hashes(self) -> None:
         for path, expected in EXPECTED_ARTIFACT_SHA256.items():
@@ -480,17 +701,21 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual([], broken)
 
     def test_release_version_consistency(self) -> None:
-        version = "0.1.0"
-        expected = {
-            PLUGIN_MANIFEST: f'"version": "{version}"',
-            ROOT / "README.md": f"当前版本：`{version}`",
-            ROOT / "CHANGELOG.md": f"## {version}",
-            ROOT / "NOTICE": f"Xuanshu Four Pillars Skill {version}",
-            ROOT / "docs" / "VALIDATION.md": f"release: {version}",
-            SCRIPTS / "four_pillars_engine.py": f'ENGINE_VERSION = "{version}"',
-            NODE_CORE: f"const ENGINE_VERSION = '{version}'",
-        }
-        for path, marker in expected.items():
+        orchestrator_version = "0.1.1"
+        plugin_version = "0.1.1"
+        core_version = "0.1.0"
+        expected = [
+            (PLUGIN_MANIFEST, f'"version": "{plugin_version}"'),
+            (ROOT / "README.md", f"编排器 / Plugin 版本：`{plugin_version}`"),
+            (ROOT / "CHANGELOG.md", f"## {plugin_version}"),
+            (ROOT / "docs" / "VALIDATION.md", f"plugin_distribution: {plugin_version}"),
+            (ROOT / "NOTICE", f"Xuanshu Four Pillars Skill {orchestrator_version}"),
+            (ROOT / "docs" / "VALIDATION.md", f"release: {orchestrator_version}"),
+            (SCRIPTS / "four_pillars_engine.py", f'ENGINE_VERSION = "{orchestrator_version}"'),
+            (ROOT / "README.md", f"Node 日历核心版本：`{core_version}`"),
+            (NODE_CORE, f"const ENGINE_VERSION = '{core_version}'"),
+        ]
+        for path, marker in expected:
             self.assertIn(marker, path.read_text(encoding="utf-8"), path)
 
     def test_ci_actions_are_sha_pinned(self) -> None:

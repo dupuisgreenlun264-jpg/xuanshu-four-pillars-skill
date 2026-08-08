@@ -6,7 +6,8 @@
 
 一个面向 ChatGPT/Codex Agent Skills 规范的可审计四柱八字 Skill。它先用确定性脚本处理冻结历法事件表、冻结历史时区依赖、近似地方视太阳时、子时流派和大运，再让模型只在固定规则注册表范围内做明确标注的传统解释。
 
-> 当前版本：`0.1.0`<br>
+> 编排器 / Plugin 版本：`0.1.1`<br>
+> Node 日历核心版本：`0.1.0`<br>
 > 计算状态：`DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED`<br>
 > 人生预测状态：`NOT_EMPIRICALLY_VALIDATED`
 
@@ -16,7 +17,7 @@ English summary: an auditable Four Pillars agent skill that separates frozen civ
 
 本仓库现在同时是一个 **skills-only Plugin**：它只打包仓库内的 Skill，不连接 MCP 服务、不要求第三方账号，也不会把出生资料发送到项目自建服务器。`.codex-plugin/plugin.json` 提供稳定的安装身份，`.agents/plugins/marketplace.json` 让这个 GitHub 仓库可以直接作为 Marketplace 源添加。
 
-先在终端添加仓库 Marketplace：
+先在终端添加仓库 Marketplace（这是官方文档明确支持的入口）：
 
 ```bash
 codex plugin marketplace add dupuisgreenlun264-jpg/xuanshu-four-pillars-skill --ref main
@@ -26,9 +27,9 @@ codex plugin marketplace list
 然后完成安装：
 
 1. 重启 ChatGPT 桌面应用；
-2. 进入 **Work** 或 **Codex**，打开 **Plugins**；
+2. 进入 **Work** 或 **Codex**，打开 **Plugins Directory**；
 3. 在来源中选择 **玄枢 Plugins**；
-4. 安装 **玄枢·严谨四柱**，新建对话后从 `@` 选择器中选用它。
+4. 安装 **玄枢·严谨四柱**，新建对话后选用它。
 
 这里的第一条命令是“登记安装源”，真正的安装按钮在 ChatGPT 桌面应用的 Plugins Directory 中。仓库 Marketplace 适合 GitHub 分发、团队安装和测试；它不等同于已经进入所有用户都能搜索到的通用公共 Plugins Directory，后者仍需单独提交审核。
 
@@ -39,7 +40,7 @@ Plugin 封装规范见 [OpenAI Package your plugin](https://developers.openai.co
 普通四柱 Skill 常让语言模型自己推日柱、猜节气、忽略历史时区，再用用户反馈反向调整解释。本项目把这些风险分成代码强制的计算校验与 Agent 必须遵循的行为契约：
 
 - **Agent 契约**：不允许模型凭记忆排四柱；必须运行离线计算脚本。
-- **代码强制**：要求 `tzdata==2026.3` / IANA `2026c`，支持 DST gap/fold，记录 TZif SHA-256；历法事件表和时区依赖缺少、哈希或版本不符时即停止。
+- **代码强制**：随 Skill 固定打包 tzdata 2026.3 / IANA 2026c，支持 DST gap/fold，记录 TZif SHA-256；历法事件表和时区资产缺少、哈希或版本不符时即停止。
 - 年、月柱按同一绝对瞬间与冻结节气边界比较；近似地方视太阳时只影响日、时基准，并明确无独立误差界。
 - 23:00 的两套版本化子时政策并行计算，分别公开日柱换日与时干锚定语义。
 - 时间未知或处在区间时返回输入候选集合；区间扫描额外加入历史时区跳变点。近似视太阳时的 ±guard 反事实检查另标为 `sensitivity_bracket`，不混作有效输入候选或概率分布。
@@ -48,14 +49,13 @@ Plugin 封装规范见 [OpenAI Package your plugin](https://developers.openai.co
 - **Agent 契约**：传统解释注册表当前为小范围实验功能；未登记规则必须省略，不能临时编造 `rule_id`。
 - **Agent 契约**：禁止用“你说准了”作为模型验证或即时调参依据。
 
-v0.1.0 尚未完成真实模型端到端遵循性评测。确定性脚本可以强制计算输入、候选集合和 manifest 身份；自然语言解释与高风险边界仍依赖 Skill 指令，不能被描述为已经由代码完全强制。
+编排器 / Plugin v0.1.1（Node 日历核心 v0.1.0）尚未完成真实模型端到端遵循性评测。确定性脚本可以强制计算输入、候选集合和 manifest 身份；自然语言解释与高风险边界仍依赖 Skill 指令，不能被描述为已经由代码完全强制。
 
 ## 快速开始
 
-运行时要求：Python 3.11+、Node.js 20+、`tzdata==2026.3`。冻结历法数据的再生成环境另需 Python 3.12+，见 [tools/README.md](tools/README.md)。
+运行时要求：Python 3.11+、Node.js 20+。固定版时区数据已随 Skill 打包，不要求宿主安装 Python 第三方依赖。冻结历法数据的再生成环境另需 Python 3.12+，见 [tools/README.md](tools/README.md)。
 
 ```bash
-python -m pip install -r requirements.txt
 python skills/analyze-four-pillars-rigorously/scripts/self_test.py
 python skills/analyze-four-pillars-rigorously/scripts/four_pillars_engine.py \
   --input examples/basic-gregorian.json --pretty

@@ -11,6 +11,8 @@ Calendar-data regeneration requires Python 3.12 or newer because the frozen buil
 | `generate_calendar_data.py` | `6f30b0579347cedfade4077e407dfaabd94f9819125c61d89bd2c014fc735405` |
 | `calendar-build-requirements.txt` | `6cfa326d743d96c47739eedd1acafb642ce0abdb4dc91d256d05755e8908f4d8` |
 | Release `calendar-1901-2033.json` | `65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509` |
+| `generate_tzdata_manifest.py` | `3d25f365817e054f0cc10fe9ea2d2467dfd58c723424268e30185a741df76cd8` |
+| Bundled timezone `MANIFEST.json` | `623879126f592375003fac137d7940dbd41b55b2e2972e1586f7680ba03efa1f` |
 
 The pinned build-only Python environment is:
 
@@ -60,6 +62,22 @@ sha256sum "$xuanshu_build_dir/de440s.bsp" \
 ```
 
 Stop if any digest differs. A newer upstream snapshot is a new build input and must not silently replace the frozen source.
+
+## Refreshing the bundled timezone tree
+
+Runtime timezone data is vendored under `skills/analyze-four-pillars-rigorously/scripts/vendor/tzdata-2026.3/`. It is separate from the astronomical build environment. The current tree is byte-identical, for all 625 `tzdata/zoneinfo/` files, to the PyPI wheel `tzdata-2026.3-py2.py3-none-any.whl` with SHA-256 `dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931`. Its exact `files.pythonhosted.org` URL is pinned in the generated manifest and provenance manifest.
+
+A refresh must verify an exact upstream wheel digest, retain the package's Apache 2.0 notices, remove cache/compiled Python files, and use a new versioned directory rather than replacing the current tree in place.
+
+After copying the reviewed `zoneinfo` tree, regenerate its complete size/hash manifest:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python tools/generate_tzdata_manifest.py
+sha256sum tools/generate_tzdata_manifest.py \
+  skills/analyze-four-pillars-rigorously/scripts/vendor/tzdata-2026.3/MANIFEST.json
+```
+
+The current manifest covers 625 files. Review the generated diff, update the pinned manifest digest in the engine and provenance records, then run the complete suite. The runtime verifies the pinned manifest plus the selected TZif file and refuses a system-zoneinfo fallback.
 
 ## Generate twice and compare
 

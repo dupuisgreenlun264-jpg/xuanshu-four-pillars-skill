@@ -8,9 +8,11 @@ import hashlib
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -302,7 +304,8 @@ class FourPillarsEngineTests(unittest.TestCase):
     def test_timezone_data_is_explicitly_versioned(self) -> None:
         bundle = engine.load_frozen_zone("Asia/Shanghai")
         self.assertEqual(engine.EXPECTED_TZDB_VERSION, bundle.version)
-        self.assertEqual("python-tzdata-frozen", bundle.source)
+        self.assertEqual("bundled-tzdata-frozen", bundle.source)
+        self.assertEqual("2026.3", engine.EXPECTED_TZDATA_BUNDLE_VERSION)
         self.assertEqual(64, len(bundle.sha256))
 
     def test_timezone_key_cannot_escape_frozen_root(self) -> None:
@@ -311,6 +314,50 @@ class FourPillarsEngineTests(unittest.TestCase):
                 "../../../../../../../../../../../usr/share/zoneinfo/Asia/Shanghai"
             )
         self.assertEqual("UTC", engine.load_frozen_zone("UTC").zone.key)
+
+    def test_timezone_manifest_missing_or_tampered_fails_closed(self) -> None:
+        missing = Path("/definitely-missing-xuanshu-tzdata-manifest.json")
+        with mock.patch.object(engine, "TZDATA_BUNDLE_MANIFEST", missing):
+            with self.assertRaisesRegex(RuntimeError, "manifest is missing"):
+                engine.load_frozen_zone("UTC")
+
+        with tempfile.TemporaryDirectory() as directory:
+            tampered = Path(directory) / "MANIFEST.json"
+            tampered.write_text("{}\n", encoding="utf-8")
+            with mock.patch.object(engine, "TZDATA_BUNDLE_MANIFEST", tampered):
+                with self.assertRaisesRegex(RuntimeError, "manifest integrity check failed"):
+                    engine.load_frozen_zone("UTC")
+
+    def test_tampered_selected_tzif_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "zoneinfo"
+            target = root / "Asia" / "Shanghai"
+            target.parent.mkdir(parents=True)
+            source = engine.VENDORED_TZDATA_ROOT / "Asia" / "Shanghai"
+            payload = bytearray(source.read_bytes())
+            payload[-1] ^= 1
+            target.write_bytes(payload)
+            (root / "tzdata.zi").write_bytes(
+                (engine.VENDORED_TZDATA_ROOT / "tzdata.zi").read_bytes()
+            )
+            with mock.patch.object(engine, "VENDORED_TZDATA_ROOT", root):
+                with self.assertRaisesRegex(RuntimeError, "file integrity check failed"):
+                    engine.load_frozen_zone("Asia/Shanghai")
+
+    def test_tampered_tzdata_version_file_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "zoneinfo"
+            target = root / "Asia" / "Shanghai"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(
+                (engine.VENDORED_TZDATA_ROOT / "Asia" / "Shanghai").read_bytes()
+            )
+            payload = bytearray((engine.VENDORED_TZDATA_ROOT / "tzdata.zi").read_bytes())
+            payload[-1] ^= 1
+            (root / "tzdata.zi").write_bytes(payload)
+            with mock.patch.object(engine, "VENDORED_TZDATA_ROOT", root):
+                with self.assertRaisesRegex(RuntimeError, "file integrity check failed"):
+                    engine.load_frozen_zone("Asia/Shanghai")
 
     def test_input_conflicts_and_unsupported_rules_fail_closed(self) -> None:
         base = {

@@ -3,13 +3,22 @@
 ## Current verdict
 
 ```yaml
-release: 0.1.0
+release: 0.1.1
+plugin_distribution: 0.1.1
 calculation_status: DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED
 traditional_prediction_status: NOT_EMPIRICALLY_VALIDATED
 agent_behavior_e2e: NOT_RUN
+skill_forward_behavior_smoke: PASS_1_POSITIVE_1_NEGATIVE_NON_HOST
 plugin_manifest_contract: LOCAL_VALIDATED
 repo_marketplace_contract: LOCAL_VALIDATED
 plugin_host_install_e2e: NOT_RUN
+public_directory_package_preflight: LOCAL_PASS
+candidate_archive: xuanshu-four-pillars-plugin-0.1.1.zip
+candidate_archive_sha256: af0121796c00ec57e79af56a2bf084c2131a956e00452fb24c725ad0a5af7763
+candidate_archive_compressed_bytes: 577357
+candidate_archive_extracted_bytes: 1077122
+candidate_archive_entries: 649
+public_directory_submission: NOT_SUBMITTED
 public_gregorian_input_range: 1901-01-01/2033-12-31
 public_chinese_lunar_label_year_envelope: 1900-2033_PARTIAL_EDGES
 first_accepted_nominal_lunar_label: 1900-11-11_NON_LEAP
@@ -29,13 +38,15 @@ public_100x_claim: PROHIBITED
 
 Test counts are intentionally not frozen into prose. The current CI run is authoritative for the exact number of collected and passing gates.
 
+The non-host forward smoke ran a fresh-agent direct Zi-hour comparison and a fresh-agent high-risk forced-binary request. The first produced the two auditable chart candidates; the second refused the forced format and offered a real-world checklist after the safety instruction was strengthened. This checks Skill behavior in the current work environment, but it is not the installed desktop-host evaluation.
+
 ## Covered release behavior
 
 - Known four-pillar and Gregorian/lunar fixtures, cross-zone lunar round trip, explicit lunar fold, and strict leap-month type.
 - Exact public edge labels: 1900 month 11 day 11 (non-leap) maps to 1901-01-01, and leap month 11 day 10 of 2033 maps to 2033-12-31. The adjacent outside labels fail closed.
 - Parallel 23:00 rollover schools.
 - DST repeated and nonexistent local time, including a historical short fold.
-- Timezone path containment, pinned `tzdata==2026.3` / IANA `2026c`, and TZif hash.
+- Timezone path containment; bundled tzdata 2026.3 / IANA 2026c; exact 625-file match to the pinned upstream wheel; pinned bundle manifest; and selected TZif hash.
 - Timezone-invariant year/month and same-instant/same-longitude apparent-solar result.
 - Exact 4-minute mean-solar shift per longitude degree.
 - Consecutive day-pillar progression and 60-day recurrence.
@@ -105,7 +116,7 @@ JPL DE440s and Skyfield are the generation path for the frozen event table. The 
 
 1. Compare every frozen new moon and solar-term instant against a pinned high-precision implementation independent of the Skyfield/JPL generation path, and publish maximum UTC/UT1 error by Delta T segment.
 2. Add -1 second / computed boundary / +1 second cases for every Lichun, Jie, 23:00, 00:00, modeled lunar-date boundary, and timezone transition.
-3. Freeze timezone assets rather than relying on an environment package.
+3. Independently reproduce the bundled timezone tree from the pinned upstream source and compare every TZif semantic transition, beyond the current exact published-wheel byte match.
 4. Replace approximate apparent-solar EoT with an apparent-Sun hour-angle implementation and independent transit fixtures.
 5. Add at least 100,000 property cases for date-cycle, interval monotonicity, round-trip, and Dayun adjacency invariants.
 6. Hold out at least 20% of FourPillarsBench cases from development.
