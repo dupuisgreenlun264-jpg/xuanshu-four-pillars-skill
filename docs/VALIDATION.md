@@ -7,6 +7,9 @@ release: 0.1.0
 calculation_status: DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED
 traditional_prediction_status: NOT_EMPIRICALLY_VALIDATED
 agent_behavior_e2e: NOT_RUN
+plugin_manifest_contract: LOCAL_VALIDATED
+repo_marketplace_contract: LOCAL_VALIDATED
+plugin_host_install_e2e: NOT_RUN
 public_gregorian_input_range: 1901-01-01/2033-12-31
 public_chinese_lunar_label_year_envelope: 1900-2033_PARTIAL_EDGES
 first_accepted_nominal_lunar_label: 1900-11-11_NON_LEAP
@@ -45,6 +48,7 @@ Test counts are intentionally not frozen into prose. The current CI run is autho
 - Fixed and unique experimental traditional-rule registry plus runtime-bound registry/provider/provenance/data identities.
 - Repeat-run canonical equality.
 - Repository examples, release metadata, local links, generated-artifact exclusion, source hashes, and full-SHA CI Action references.
+- Skills-only Plugin manifest and repo Marketplace identity, source, policy, version, path containment, and safety-copy consistency.
 
 ## Frozen v0.2 data checks
 

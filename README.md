@@ -12,6 +12,28 @@
 
 English summary: an auditable Four Pillars agent skill that separates frozen civil-time normalization, versioned calendrical mapping, explicit traditional providers, registry-constrained interpretation, and low-risk reflection.
 
+## 作为 ChatGPT/Codex Plugin 安装
+
+本仓库现在同时是一个 **skills-only Plugin**：它只打包仓库内的 Skill，不连接 MCP 服务、不要求第三方账号，也不会把出生资料发送到项目自建服务器。`.codex-plugin/plugin.json` 提供稳定的安装身份，`.agents/plugins/marketplace.json` 让这个 GitHub 仓库可以直接作为 Marketplace 源添加。
+
+先在终端添加仓库 Marketplace：
+
+```bash
+codex plugin marketplace add dupuisgreenlun264-jpg/xuanshu-four-pillars-skill --ref main
+codex plugin marketplace list
+```
+
+然后完成安装：
+
+1. 重启 ChatGPT 桌面应用；
+2. 进入 **Work** 或 **Codex**，打开 **Plugins**；
+3. 在来源中选择 **玄枢 Plugins**；
+4. 安装 **玄枢·严谨四柱**，新建对话后从 `@` 选择器中选用它。
+
+这里的第一条命令是“登记安装源”，真正的安装按钮在 ChatGPT 桌面应用的 Plugins Directory 中。仓库 Marketplace 适合 GitHub 分发、团队安装和测试；它不等同于已经进入所有用户都能搜索到的通用公共 Plugins Directory，后者仍需单独提交审核。
+
+Plugin 封装规范见 [OpenAI Package your plugin](https://developers.openai.com/plugins/build/plugins)。如果只想运行确定性引擎，也可以继续使用下方的命令行方式。
+
 ## 为什么不是另一个“提示词算八字”
 
 普通四柱 Skill 常让语言模型自己推日柱、猜节气、忽略历史时区，再用用户反馈反向调整解释。本项目把这些风险分成代码强制的计算校验与 Agent 必须遵循的行为契约：
@@ -120,6 +142,8 @@ v0.1 的公开公历输入范围为 1901-01-01 至 2033-12-31。农历标签年�
 
 ```text
 xuanshu-four-pillars-skill/
+├── .codex-plugin/plugin.json
+├── .agents/plugins/marketplace.json
 ├── skills/analyze-four-pillars-rigorously/
 │   ├── SKILL.md
 │   ├── agents/openai.yaml

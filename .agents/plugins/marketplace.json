@@ -1,0 +1,21 @@
+{
+  "name": "xuanshu-plugins",
+  "interface": {
+    "displayName": "玄枢 Plugins"
+  },
+  "plugins": [
+    {
+      "name": "xuanshu-four-pillars",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
