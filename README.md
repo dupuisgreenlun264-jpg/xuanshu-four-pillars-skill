@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-engineering--regression--tested-orange.svg)](docs/VALIDATION.md)
+[![CI](https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill/actions/workflows/ci.yml)
 
 一个面向 ChatGPT/Codex Agent Skills 规范的可审计四柱八字 Skill。它先用确定性脚本处理冻结历法事件表、冻结历史时区依赖、近似地方视太阳时、子时流派和大运，再让模型只在固定规则注册表范围内做明确标注的传统解释。
 
