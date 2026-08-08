@@ -1,6 +1,6 @@
 {
   "name": "xuanshu-four-pillars",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Auditable Four Pillars calculation and source-constrained traditional cultural interpretation.",
   "author": {
     "name": "Xuanshu Four Pillars contributors",
@@ -20,15 +20,27 @@
   "interface": {
     "displayName": "玄枢·严谨四柱",
     "shortDescription": "可审计四柱计算与传统文化解读",
-    "longDescription": "使用冻结历法、历史时区、边界候选与来源约束生成可复现的四柱报告；开发验证版，不提供经科学验证的人生预测。",
+    "longDescription": "以离线确定性引擎处理冻结历法、历史时区、边界候选和流派差异，再按固定来源规则生成可复核的传统文化解读。计算已做工程验证但尚未独立认证；传统人生预测未获实证验证，也不用于医疗、法律、金融或其他高风险决策。",
     "developerName": "Xuanshu Four Pillars contributors",
-    "category": "Productivity",
+    "category": "Education & Research",
     "websiteURL": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
-    "defaultPrompt": [
-      "生成一份普通版和专业版并列的可审计四柱报告。",
-      "比较子时换日流派，并明确哪些柱发生变化。",
-      "解释这套四柱引擎的计算边界、来源和未认证项。"
+    "supportURL": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill/issues",
+    "privacyPolicyURL": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill/blob/main/docs/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill/blob/main/docs/TERMS.md",
+    "capabilities": [
+      "Deterministic Four Pillars chart calculation with auditable calendar, timezone, and rule metadata.",
+      "Explicit comparison of Zi-hour, civil-time, and approximate local apparent-solar-time variants.",
+      "Source-constrained traditional cultural interpretation in professional and plain-language formats.",
+      "Uncertainty candidates, provenance, validation limits, and safety boundaries disclosed in reports."
     ],
-    "brandColor": "#101828"
+    "defaultPrompt": [
+      "按民用时排盘：1988-02-15 23:30，Asia/Shanghai，并比较两种子时换日规则。",
+      "比较 1990-05-15 14:36 北京民用时与近似地方视太阳时的四柱差异。",
+      "解释这套系统的计算验证状态、边界与尚未完成的独立认证。"
+    ],
+    "brandColor": "#101828",
+    "brandColorDark": "#F5D06F",
+    "logo": "./skills/analyze-four-pillars-rigorously/assets/icon.svg",
+    "composerIcon": "./skills/analyze-four-pillars-rigorously/assets/icon.svg"
   }
 }

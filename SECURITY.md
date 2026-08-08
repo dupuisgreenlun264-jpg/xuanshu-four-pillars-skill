@@ -18,7 +18,7 @@ Include the smallest reproducible input, expected behavior, affected version, an
 
 ## Integrity controls
 
-The runtime verifies the SHA-256 of the frozen `calendar-1901-2033.json` data file, requires the pinned tzdata/tzdb version without a system fallback, confines timezone keys to the package root, and hashes the selected TZif file. No ephemeris kernel, Skyfield package, HKO table, or third-party calendrical binary is required or loaded at runtime.
+The runtime verifies the SHA-256 of the frozen `calendar-1901-2033.json` data file, reads only the bundled tzdata 2026.3 / IANA 2026c tree without a system fallback, confines timezone keys to that package root, and hashes the selected TZif file. No ephemeris kernel, Skyfield package, HKO table, or third-party calendrical binary is required or loaded at runtime.
 
 Calendar-data regeneration must verify the recorded JPL DE440s, USNO `deltat.data`, and USNO `deltat.preds` hashes; record the generator and build-tool versions; rerun the complete validation suite; review distribution rights; update the provenance manifest and changelog; and produce a new dataset/version identity. Dependency, frozen-data, provider-formula, provider-manifest, provenance-manifest, or rule-registry upgrades require the same review discipline. Never replace a source snapshot or generated dataset in place while retaining its old hash or version.
 

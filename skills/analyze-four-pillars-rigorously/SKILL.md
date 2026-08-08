@@ -1,6 +1,6 @@
 ---
 name: analyze-four-pillars-rigorously
-description: Create auditable Four Pillars (Sizhu) charts and source-constrained traditional interpretations with a deterministic versioned calendar wrapper, frozen historical timezone dependency, computed solar-term boundaries, approximate local apparent-solar time, explicit Zi-hour policies, uncertainty candidates, and guarded Dayun handling. Use when a user asks to calculate, analyze, verify, compare, or explain 八字、四柱、命盘、大运、流年, Four Pillars, or Sizhu from birth data, including professional/plain-language reports. Treat every traditional reading as cultural reflection in a development release, not scientifically validated prediction. Do not use for I Ching divination, Tarot, Western astrology, or a generic cultural discussion that does not request a Four Pillars chart or Sizhu-specific analysis.
+description: Create auditable Four Pillars (Sizhu) charts and source-constrained traditional interpretations with a deterministic versioned calendar wrapper, frozen historical timezone dependency, computed solar-term boundaries, approximate local apparent-solar time, explicit Zi-hour policies, uncertainty candidates, and guarded Dayun handling. Use when a user asks to calculate, analyze, verify, compare, or explain 八字、四柱、命盘、大运、流年, Four Pillars, or Sizhu from birth data, including professional/plain-language reports. Treat every traditional reading as cultural reflection, not scientifically validated prediction. Do not use for I Ching divination, Tarot, Western astrology, or a generic cultural discussion that does not request a Four Pillars chart or Sizhu-specific analysis.
 ---
 
 # Analyze Four Pillars Rigorously
@@ -56,13 +56,15 @@ Never silently change a convention to make a chart match a desired answer.
 
 ## Run the deterministic engine
 
-Create a temporary JSON input that follows `references/input-contract.md`, then run:
+Create a private temporary JSON input outside the repository that follows `references/input-contract.md`, then run:
 
 ```bash
 python3 "$SKILL_DIR/scripts/four_pillars_engine.py" --input /absolute/path/input.json --pretty
 ```
 
 Resolve `SKILL_DIR` to this skill's directory. Do not calculate pillars from memory. Do not replace the script with mental arithmetic, a generic web calculator, or an unsourced calendar table.
+
+Delete the temporary input in a `finally`-equivalent cleanup path after ordinary success, error, or a cleanup-capable interruption. Do not reuse it across users or conversations, write birth data to a repository path, include it in logs, or retain it after the current calculation. Do not promise cleanup after an uncatchable host or operating-system termination. If the execution environment cannot provide a private temporary path and ordinary cleanup, stop before writing the input and explain the privacy blocker.
 
 Treat a nonzero exit as a blocked calculation. Report the stable error code and rejected field; do not invent a fallback value. In particular:
 
@@ -126,6 +128,7 @@ Do not claim “100× more accurate” unless the exact criteria in `references/
 - Frame Four Pillars as traditional culture and reflective practice, not established causal science.
 - Do not predict death, disaster, severe illness, criminality, infidelity, fertility, or unavoidable misfortune.
 - Do not diagnose health conditions or issue legal, financial, medical, employment, marriage, or reproductive decisions.
+- When a user asks the chart to decide a high-stakes action, do not comply with a forced yes/no, single-choice, date-selection, or probability format. State that Four Pillars cannot decide it, then offer a brief reversible checklist based on current real-world evidence and, where appropriate, qualified professional advice.
 - Avoid fear, fatalism, dependency, coercion, and high-frequency checking.
 - Prefer reversible actions grounded in the user's real circumstances.
 - Do not save birth data unless the user explicitly requests a reusable report; redact identifiers by default.

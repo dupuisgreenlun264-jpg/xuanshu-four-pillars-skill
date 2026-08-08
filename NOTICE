@@ -1,4 +1,4 @@
-Xuanshu Four Pillars Skill 0.1.0
+Xuanshu Four Pillars Skill 0.1.1
 
 Original project code, frozen calendar data, and documentation:
   Copyright (c) 2026 Xuanshu Four Pillars contributors
@@ -110,10 +110,23 @@ Dayun formula lineage (no bundled or runtime dependency):
     License copy:
       skills/analyze-four-pillars-rigorously/scripts/vendor/LICENSE-tyme4ts
 
-Pinned runtime dependency (not bundled):
+Bundled runtime timezone data:
   tzdata 2026.3 / IANA tzdb 2026c
     Source: https://github.com/python/tzdata
     License: Apache-2.0
+    Bundled tree:
+      skills/analyze-four-pillars-rigorously/scripts/vendor/tzdata-2026.3/zoneinfo
+    License copies:
+      skills/analyze-four-pillars-rigorously/scripts/vendor/tzdata-2026.3/LICENSE
+      skills/analyze-four-pillars-rigorously/scripts/vendor/tzdata-2026.3/LICENSE_APACHE
+    Bundle manifest SHA-256:
+      623879126f592375003fac137d7940dbd41b55b2e2972e1586f7680ba03efa1f
+    Manifest generator SHA-256:
+      3d25f365817e054f0cc10fe9ea2d2467dfd58c723424268e30185a741df76cd8
+    Upstream wheel SHA-256:
+      dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931
+    Bundled `zoneinfo` comparison:
+      PASS_625_OF_625_FILES_BYTE_IDENTICAL
 
 Calculation-method reference:
   NOAA Global Monitoring Laboratory, General Solar Position Calculations

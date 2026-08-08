@@ -141,7 +141,7 @@
   "components": [
     {
       "name": "project-authored calendar runtime",
-      "version": "xuanshu-audit-v0.1",
+      "version": "xuanshu-audit-v0.1.1",
       "role": "offline lookup, lunisolar mapping, pillars, and traditional mappings over frozen data",
       "license": "MIT",
       "third_party_runtime_calendar_dependency": false
@@ -263,6 +263,14 @@
       "python_distribution_version": "2026.3",
       "iana_database_version": "2026c",
       "role": "frozen IANA historical civil-time dependency",
+      "bundled": true,
+      "bundle_path": "scripts/vendor/tzdata-2026.3/zoneinfo",
+      "bundle_manifest": "scripts/vendor/tzdata-2026.3/MANIFEST.json",
+      "bundle_manifest_sha256": "623879126f592375003fac137d7940dbd41b55b2e2972e1586f7680ba03efa1f",
+      "upstream_wheel": "https://files.pythonhosted.org/packages/e5/6d/b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/tzdata-2026.3-py2.py3-none-any.whl",
+      "upstream_wheel_sha256": "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931",
+      "upstream_wheel_match": "PASS_625_OF_625_FILES_BYTE_IDENTICAL",
+      "license_copy": "scripts/vendor/tzdata-2026.3/LICENSE_APACHE",
       "runtime_policy": "fail_closed_on_missing_or_mismatched_version; hash selected TZif file",
       "system_zoneinfo_fallback": false
     },

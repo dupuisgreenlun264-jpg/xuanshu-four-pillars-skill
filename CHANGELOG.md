@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-08-08
+
+- Added public-directory listing metadata, public privacy and terms pages, square Plugin brand assets, and light/dark brand colors.
+- Added deterministic skills-only ZIP construction and structural submission preflight.
+- Bundled tzdata 2026.3 / IANA 2026c plus its Apache 2.0 notices so the Plugin host does not need to install a Python package at runtime; pinned the upstream wheel and verified all 625 copied files byte-for-byte.
+- Added a Windows desktop acceptance protocol plus exactly five positive and three negative reviewer cases.
+- Made temporary birth-input deletion an explicit Skill requirement, bumped the Python orchestrator/ruleset to v0.1.1, and kept the Node calendrical core at v0.1.0.
+- Preserved `DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED` and `NOT_EMPIRICALLY_VALIDATED`; desktop host installation remains a separate evidence gate.
+
 ## 0.1.0 — 2026-08-08
 
 - Added an installable skills-only ChatGPT/Codex Plugin manifest and a Git-backed repository Marketplace entry, with matching release gates and desktop installation instructions.

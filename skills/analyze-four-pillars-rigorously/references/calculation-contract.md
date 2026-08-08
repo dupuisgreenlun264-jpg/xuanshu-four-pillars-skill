@@ -12,7 +12,7 @@
 
 ## Release status
 
-Version `xuanshu-audit-v0.1` is a regression-tested development release with status `DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED`. Runtime calendrical behavior is implemented in project-owned JavaScript over the hash-verified frozen `calendar-1901-2033.json` file. The data schema is `xuanshu-calendar-data-v0.2`; the Node response schema is `xuanshu-four-pillars-core-response-v0.2`. It requires `tzdata==2026.3` / IANA `2026c` without a system-zoneinfo fallback. It does **not** claim independent ephemeris certification or empirical life-prediction validity.
+Version `xuanshu-audit-v0.1.1` has passed the stated engineering regression gates and has status `DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED`. Runtime calendrical behavior is implemented in project-owned JavaScript over the hash-verified frozen `calendar-1901-2033.json` file. The data schema is `xuanshu-calendar-data-v0.2`; the Node response schema is `xuanshu-four-pillars-core-response-v0.2`. It loads only the bundled tzdata 2026.3 / IANA 2026c tree and has no system-zoneinfo fallback. It does **not** claim independent ephemeris certification or empirical life-prediction validity.
 
 Public Gregorian input range: 1901-01-01 through 2033-12-31. Chinese-lunar label years have a 1900–2033 envelope, but both edges are partial. The first accepted nominal label is 1900 month 11 day 11 (non-leap); the last is leap month 11 day 10 of 2033. A label must exist uniquely and convert into the public Gregorian envelope. The 1900–2034 calendar frame and event context through 2035-02-28 are internal endpoint support only.
 
@@ -41,7 +41,7 @@ V0.2 positional rows are self-described inside the data:
 ## Time normalization
 
 1. Parse the stated local wall-clock time without attaching a guessed offset.
-2. Load the IANA TZif file only from pinned Python `tzdata==2026.3`; reject path traversal, unexpected versions, non-TZif files, and missing dependencies.
+2. Load the IANA TZif file only from the bundled tzdata 2026.3 tree; reject path traversal, unexpected versions, non-TZif files, and missing assets.
 3. Try `fold=0` and `fold=1`, convert each to UTC, and round-trip to local time.
 4. Reject no-match gaps; retain two distinct matches unless the user supplies a fold.
 5. Record UTC, offset, DST, zone version, and TZif SHA-256.
