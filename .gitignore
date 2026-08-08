@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+.idea/
+.vscode/
+.venv/
+venv/
+dist/
+build/
+reports/
+private-inputs/
+*.four-pillars-report.json
+
+# Build-time astronomical inputs are fetched and verified locally; they are not
+# part of the runtime or release archive.
+*.bsp
+deltat.data
+deltat.preds

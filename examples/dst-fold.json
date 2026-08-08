@@ -1,0 +1,13 @@
+{
+  "birth": {
+    "calendar": "gregorian",
+    "date": "2024-11-03",
+    "time": "01:30:00",
+    "timezone": "America/New_York",
+    "fold": null
+  },
+  "rules": {
+    "time_basis": "civil_clock",
+    "day_boundary": "zi_initial_next_day"
+  }
+}

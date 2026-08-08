@@ -1,0 +1,89 @@
+{
+  "schema_version": "xuanshu-dayun-provider-manifest-v0.1",
+  "status": "FORMULA_LINEAGE_DOCUMENTED_NOT_INDEPENDENTLY_NORMATIVELY_SOURCED",
+  "calendar_runtime": {
+    "implementation": "project-authored JavaScript",
+    "node_core": "scripts/four_pillars_core.js",
+    "node_core_sha256": "8b3cb09cd9468ab9bfb6c199c58fd053f1e025fca2ac059fe7ee846755773655",
+    "core_response_schema": "xuanshu-four-pillars-core-response-v0.2",
+    "event_data": "scripts/data/calendar-1901-2033.json",
+    "event_data_sha256": "65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509",
+    "event_data_schema": "xuanshu-calendar-data-v0.2",
+    "event_data_identity": "jpl-de440s-skyfield-1.54-v1",
+    "event_data_freeze_status": "FROZEN_AND_HASH_VERIFIED",
+    "third_party_calendar_binary_at_runtime": false,
+    "public_gregorian_input_range": "1901-01-01/2033-12-31",
+    "public_chinese_lunar_label_year_envelope": "1900-2033; both edge years are partial",
+    "first_accepted_nominal_lunar_label": {
+      "year": 1900,
+      "month": 11,
+      "day": 11,
+      "leap_month": false
+    },
+    "last_accepted_nominal_lunar_label": {
+      "year": 2033,
+      "month": 11,
+      "day": 10,
+      "leap_month": true
+    },
+    "lunar_edge_policy": "accept only a unique nominal label that converts inside 1901-01-01 through 2033-12-31",
+    "internal_calendar_frame_years": "1900-2034",
+    "context_event_range": "1900-01-01/2035-02-28"
+  },
+  "formula_lineage": {
+    "name": "tyme4ts",
+    "version": "1.5.2",
+    "source": "https://github.com/6tail/tyme4ts",
+    "audited_package": "https://registry.npmjs.org/tyme4ts/-/tyme4ts-1.5.2.tgz",
+    "license": "MIT",
+    "license_copy": "scripts/vendor/LICENSE-tyme4ts",
+    "audited_source_artifact": "tyme4ts@1.5.2 dist/lib/index.cjs",
+    "audited_source_artifact_sha256": "53d1665ecc8007689bb8de423d94934b4afa68e07fb1a65427a07375648625f8",
+    "audited_source_artifact_bundled": false,
+    "role": "inspected implementation lineage for four independently rewritten Dayun child-limit formulas only",
+    "bundled_binary": false,
+    "runtime_dependency": false,
+    "calendar_core": false
+  },
+  "shared_direction_and_term_rule": {
+    "forward": "Yang year-stem with man parameter, or Yin year-stem with woman parameter",
+    "backward": "all other accepted parameter combinations",
+    "term_selection": "Backward uses the previous-or-current Jie; forward uses the next Jie.",
+    "term_time_scale": "TT_MINUS_FROZEN_DELTAT_AS_UT1_PROXY",
+    "term_model_guard_and_source_are_returned": true,
+    "implementation": "project-code rewrite with MIT formula-lineage attribution",
+    "evidence_layer": "L1C_VERSIONED_TRADITIONAL_MAP"
+  },
+  "providers": [
+    {
+      "id": "default",
+      "lineage_reference_class": "DefaultChildLimitProvider",
+      "implementation": "project-code rewrite; no tyme4ts runtime dependency",
+      "conversion": "For absolute seconds to the selected Jie: 259200 s -> 1 symbolic year; 21600 s -> 1 month; 720 s -> 1 day; 30 s -> 1 hour; each remaining second -> 2 minutes.",
+      "remainder_policy": "preserves remainder through symbolic minutes"
+    },
+    {
+      "id": "china95",
+      "lineage_reference_class": "China95ChildLimitProvider",
+      "implementation": "project-code rewrite; no tyme4ts runtime dependency",
+      "conversion": "Floor to whole minutes; 4320 min -> 1 symbolic year; 360 min -> 1 month; 12 min -> 1 day.",
+      "remainder_policy": "drops the sub-12-minute remainder"
+    },
+    {
+      "id": "lunar_sect1",
+      "lineage_reference_class": "LunarSect1ChildLimitProvider",
+      "implementation": "project-code rewrite; no tyme4ts runtime dependency",
+      "conversion": "Uses solar-day difference plus traditional two-hour branch indices; each full day contributes 4 symbolic months and the branch-index remainder is converted to months and days.",
+      "remainder_policy": "branch-index resolution"
+    },
+    {
+      "id": "lunar_sect2",
+      "lineage_reference_class": "LunarSect2ChildLimitProvider",
+      "implementation": "project-code rewrite; no tyme4ts runtime dependency",
+      "conversion": "Floor to whole minutes; 4320 min -> 1 symbolic year; 360 min -> 1 month; 12 min -> 1 day; each remaining minute -> 2 hours.",
+      "remainder_policy": "preserves remainder through symbolic hours"
+    }
+  ],
+  "required_output_wording": "symbolic start under the named provider",
+  "known_limit": "The formulas are documented for reproducibility and attributed to their MIT implementation lineage, but have not yet been tied to independently inspected classical or modern normative sources."
+}

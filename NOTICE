@@ -1,0 +1,135 @@
+Xuanshu Four Pillars Skill 0.1.0
+
+Original project code, frozen calendar data, and documentation:
+  Copyright (c) 2026 Xuanshu Four Pillars contributors
+  Licensed under the MIT License in the repository root.
+
+Runtime calendar architecture:
+  Project-authored Node core:
+    skills/analyze-four-pillars-rigorously/scripts/four_pillars_core.js
+    SHA-256:
+      8b3cb09cd9468ab9bfb6c199c58fd053f1e025fca2ac059fe7ee846755773655
+    Response schema: xuanshu-four-pillars-core-response-v0.2
+
+  Frozen generated event/calendar file:
+    skills/analyze-four-pillars-rigorously/scripts/data/calendar-1901-2033.json
+    SHA-256:
+      65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509
+    Data schema: xuanshu-calendar-data-v0.2
+
+  Project-authored regeneration tool:
+    tools/generate_calendar_data.py
+    SHA-256:
+      6f30b0579347cedfade4077e407dfaabd94f9819125c61d89bd2c014fc735405
+    License: MIT
+
+  Pinned build-only requirements:
+    tools/calendar-build-requirements.txt
+    SHA-256:
+      6cfa326d743d96c47739eedd1acafb642ce0abdb4dc91d256d05755e8908f4d8
+
+  No third-party ephemeris or calendrical binary is loaded at runtime.
+  Event time is stored as unix_ms_ut1_proxy: TT minus the frozen Delta T model,
+  encoded in Unix milliseconds as a UT1-as-UTC comparison proxy. It is not an
+  unqualified exact historical UTC timestamp; per-event model guards apply.
+
+Build-time calendar-data sources (not bundled; downloaded locally by the
+regeneration workflow and never used at runtime):
+  Skyfield 1.54
+    Source: https://github.com/skyfielders/python-skyfield/tree/1.54
+    License: MIT
+    Role: build-time astronomical event calculation only.
+
+  jplephem 2.24
+    Source: https://pypi.org/project/jplephem/2.24/
+    License: MIT
+    Role: build-time JPL SPK reader dependency only.
+
+  numpy 2.5.1
+    Source: https://pypi.org/project/numpy/2.5.1/
+    Package license expression:
+      BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
+    Role: build-time numerical array dependency only.
+
+  sgp4 2.27
+    Source: https://pypi.org/project/sgp4/2.27/
+    License: MIT
+    Role: build-time Skyfield dependency only; satellite propagation is not
+    used by this generator.
+
+  JPL DE440s
+    Source: https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440s.bsp
+    SHA-256:
+      c1c7feeab882263fc493a9d5a5b2ddd71b54826cdf65d8d17a76126b260a49f2
+    Role: build-time ephemeris input only; the BSP kernel is not distributed.
+
+  USNO deltat.data
+    Source: https://maia.usno.navy.mil/ser7/deltat.data
+    SHA-256:
+      9f88e53593495a09219fe956eeadea0fa9f8e3e02c310b2aa2b70852383cdf6f
+
+  USNO deltat.preds
+    Source: https://maia.usno.navy.mil/ser7/deltat.preds
+    SHA-256:
+      5d864fddd30b2c64d2a86d3debbb25604eb5de44370c96bccf2abd5463f3db08
+
+  NASA Eclipse Web Site, Polynomial Expressions for Delta T
+    Source: https://eclipse.gsfc.nasa.gov/SEcat5/deltatpoly.html
+    Role: independently implemented fallback/model segments; no NASA code or
+    page text is bundled.
+
+Validation-only calendar oracle (not redistributed):
+  Hong Kong Observatory Gregorian-Lunar Calendar Conversion Tables
+    Source: https://www.hko.gov.hk/en/gts/time/conversion.htm
+    Text-table locator: https://www.hko.gov.hk/en/gts/time/conversion1_text.htm
+    Role: local date-level comparison only and not a calendar-data generation
+    input. No HKO table, row text, or complete dataset is copied or distributed.
+    The frozen artifact retains only nine non-expressive comparison facts
+    (both dates, a discrepancy code, and a source locator) needed for audit.
+    Final frozen-data rerun: PASS_WITH_DISCLOSED_DIVERGENCES
+      Gregorian day rows compared: 48,578
+      Lunar daily-row divergences: 90 across three 30-day runs
+      Solar-term rows compared: 3,192
+      Solar-term date divergences: 6
+      Unexpected divergences: 0
+
+Dayun formula lineage (no bundled or runtime dependency):
+  tyme4ts 1.5.2
+    Copyright (c) 2024 6tail
+    Source: https://github.com/6tail/tyme4ts
+    Audited package: https://registry.npmjs.org/tyme4ts/-/tyme4ts-1.5.2.tgz
+    License: MIT
+    Audited source artifact: tyme4ts@1.5.2 dist/lib/index.cjs
+    Audited source artifact SHA-256:
+      53d1665ecc8007689bb8de423d94934b4afa68e07fb1a65427a07375648625f8
+    The audited source artifact is not bundled.
+    Role: inspected implementation lineage for four independently rewritten
+    Dayun child-limit provider formulas only; not the calendar core. The
+    inspected classes were DefaultChildLimitProvider, China95ChildLimitProvider,
+    LunarSect1ChildLimitProvider, and LunarSect2ChildLimitProvider.
+    License copy:
+      skills/analyze-four-pillars-rigorously/scripts/vendor/LICENSE-tyme4ts
+
+Pinned runtime dependency (not bundled):
+  tzdata 2026.3 / IANA tzdb 2026c
+    Source: https://github.com/python/tzdata
+    License: Apache-2.0
+
+Calculation-method reference:
+  NOAA Global Monitoring Laboratory, General Solar Position Calculations
+    Source: https://gml.noaa.gov/grad/solcalc/solareqns.PDF
+    Role: reference for the explicitly approximate equation-of-time
+    implementation.
+
+Traditional-rule inspection locator:
+  Underlying historical work: 《穷通宝鉴》
+  Inspected page revision: 2294674
+    https://zh.wikisource.org/w/index.php?oldid=2294674&title=%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4
+  The ancient underlying work is treated as a public-domain historical work.
+  The revision URL is an audit locator only. This repository does not copy or
+  redistribute the site's transcription, editorial text, or annotations.
+  Registry entries are independently written, limited paraphrases.
+
+Design reference:
+  Public peer Skill directory conventions were reviewed for format only; no
+  runtime code, calendar rules, or interpretive text was copied.

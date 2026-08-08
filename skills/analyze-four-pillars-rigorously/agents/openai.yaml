@@ -1,0 +1,6 @@
+interface:
+  display_name: "玄枢·严谨四柱（开发版）"
+  short_description: "传统文化开发版：可审计四柱排盘与边界分析，非科学人生预测"
+  default_prompt: "使用 $analyze-four-pillars-rigorously 以传统文化开发版方式生成可审计四柱报告，披露边界不确定性，并明确这不是科学预测。"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"

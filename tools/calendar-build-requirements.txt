@@ -1,0 +1,6 @@
+# Build-only environment for tools/generate_calendar_data.py.
+# These packages and the DE440s kernel must never be included in the runtime artifact.
+skyfield==1.54
+jplephem==2.24
+numpy==2.5.1
+sgp4==2.27

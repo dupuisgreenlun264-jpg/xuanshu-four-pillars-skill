@@ -1,0 +1,15 @@
+name: Security contact request
+description: Request a private channel without disclosing vulnerability details or personal data.
+title: "[security contact] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not describe the vulnerability here. Do not include birth records, personal data, exploit details, logs, or signed URLs. A maintainer will provide a private reporting channel.
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Public-disclosure safety
+      options:
+        - label: I have not included vulnerability details, exploit material, or personal data in this public request.
+          required: true

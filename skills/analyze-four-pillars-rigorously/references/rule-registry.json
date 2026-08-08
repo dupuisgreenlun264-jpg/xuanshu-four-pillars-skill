@@ -1,0 +1,91 @@
+{
+  "schema_version": "xuanshu-traditional-rule-registry-v0.1",
+  "registry_status": "EXPERIMENTAL_LIMITED_COVERAGE",
+  "inspected_at": "2026-08-07",
+  "policy": {
+    "runtime_rule_ids_may_be_invented": false,
+    "unregistered_material_interpretation": "OMIT_AND_MARK_UNKNOWN",
+    "outcome_predictions_authorized": false
+  },
+  "rules": [
+    {
+      "rule_id": "T-HOU-QTBJ-BALANCE-001",
+      "method": "tiaohou",
+      "claim_paraphrase": "Within this text's traditional framework, both excess and insufficiency are treated as conditions to correct toward balance; this is a method premise, not an outcome prediction.",
+      "premises": [
+        "A T-HOU method comparison is explicitly requested.",
+        "The statement is presented only as the inspected text's framework."
+      ],
+      "exclusions": [
+        "Do not convert balance into a numerical element percentage.",
+        "Do not infer health, wealth, personality, or life events from this premise alone."
+      ],
+      "source": {
+        "title": "《穷通宝鉴》",
+        "topic": "五行总论",
+        "revision_id": 2294674,
+        "url": "https://zh.wikisource.org/w/index.php?oldid=2294674&title=%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4",
+        "inspected_location": "五行总论，固定版本正文第 188 行附近",
+        "source_kind": "public transcription"
+      },
+      "conflicts": [],
+      "allowed_output_scope": "methodology_only",
+      "status": "traditional_interpretation"
+    },
+    {
+      "rule_id": "T-HOU-QTBJ-GENG-SI-001",
+      "method": "tiaohou",
+      "claim_paraphrase": "For a Geng day in the Si-month passage, inspect Ren first, then Wu, with Bing as assistance; the passage also says the order is not rigid and the chart's stated defect should govern the remedy.",
+      "premises": [
+        "The stable day stem is 庚.",
+        "The stable month branch is 巳 under the declared computed-Jie convention.",
+        "No remaining chart candidate changes either premise."
+      ],
+      "exclusions": [
+        "Do not call 壬、戊、丙 a scientifically validated prescription.",
+        "Do not infer a single final useful deity without checking the complete candidate chart.",
+        "Do not reuse this rule for 午月 or 未月."
+      ],
+      "source": {
+        "title": "《穷通宝鉴》",
+        "topic": "论庚金·三夏庚金·四月庚金",
+        "revision_id": 2294674,
+        "url": "https://zh.wikisource.org/w/index.php?oldid=2294674&title=%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4#%E4%B8%89%E5%A4%8F%E5%BA%9A%E9%87%91",
+        "inspected_location": "固定版本正文第 1051–1057 行",
+        "source_kind": "public transcription"
+      },
+      "conflicts": [
+        "T-HOU-QTBJ-GENG-SI-METAL-FRAME-001"
+      ],
+      "allowed_output_scope": "traditional_method_comparison",
+      "status": "traditional_interpretation"
+    },
+    {
+      "rule_id": "T-HOU-QTBJ-GENG-SI-METAL-FRAME-001",
+      "method": "tiaohou",
+      "claim_paraphrase": "The same passage treats a completed metal branch configuration as a disqualifier for mechanically applying the ordinary Bing-assistance reading and instead asks the reader to inspect Ding.",
+      "premises": [
+        "The stable day stem is 庚.",
+        "The stable month branch is 巳.",
+        "A separately defined and source-supported metal branch configuration is actually present."
+      ],
+      "exclusions": [
+        "Do not assert a metal configuration from raw element counts.",
+        "Do not apply when the required branch relation is absent or candidate-dependent."
+      ],
+      "source": {
+        "title": "《穷通宝鉴》",
+        "topic": "论庚金·三夏庚金·四月庚金",
+        "revision_id": 2294674,
+        "url": "https://zh.wikisource.org/w/index.php?oldid=2294674&title=%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4#%E4%B8%89%E5%A4%8F%E5%BA%9A%E9%87%91",
+        "inspected_location": "固定版本正文第 1055–1057 行",
+        "source_kind": "public transcription"
+      },
+      "conflicts": [
+        "T-HOU-QTBJ-GENG-SI-001"
+      ],
+      "allowed_output_scope": "traditional_method_comparison",
+      "status": "traditional_interpretation"
+    }
+  ]
+}

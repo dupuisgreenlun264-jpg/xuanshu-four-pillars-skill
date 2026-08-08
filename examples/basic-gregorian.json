@@ -1,0 +1,12 @@
+{
+  "birth": {
+    "calendar": "gregorian",
+    "date": "1988-02-15",
+    "time": "23:30:00",
+    "timezone": "Asia/Shanghai"
+  },
+  "rules": {
+    "time_basis": "civil_clock",
+    "day_boundary": "both"
+  }
+}

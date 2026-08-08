@@ -1,0 +1,17 @@
+{
+  "birth": {
+    "calendar": "gregorian",
+    "date": "1990-05-15",
+    "time": "14:36:00",
+    "timezone": "Asia/Shanghai",
+    "longitude": 116.4074
+  },
+  "traditional_sex_for_dayun": "woman",
+  "rules": {
+    "time_basis": "local_apparent_solar",
+    "compare_civil_clock": true,
+    "day_boundary": "both",
+    "child_limit_provider": "default",
+    "decade_count": 8
+  }
+}

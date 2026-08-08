@@ -1,0 +1,285 @@
+{
+  "schema_version": "xuanshu-provenance-v0.1",
+  "manifest_updated_at": "2026-08-08",
+  "release_status": "DEVELOPMENT_VALIDATED_NOT_INDEPENDENTLY_CERTIFIED",
+  "calendar_data_freeze": {
+    "file": "scripts/data/calendar-1901-2033.json",
+    "sha256": "65189952013b9471e6a0e8a63109ce6305d6242588ec6e3fabdb8ddd0bdd4509",
+    "status": "FROZEN_AND_HASH_VERIFIED",
+    "schema_version": "xuanshu-calendar-data-v0.2",
+    "calendar_core_version": "jpl-de440s-skyfield-1.54-v1",
+    "node_core": "scripts/four_pillars_core.js",
+    "node_core_sha256": "8b3cb09cd9468ab9bfb6c199c58fd053f1e025fca2ac059fe7ee846755773655",
+    "node_response_schema": "xuanshu-four-pillars-core-response-v0.2",
+    "generator": "tools/generate_calendar_data.py",
+    "generator_sha256": "6f30b0579347cedfade4077e407dfaabd94f9819125c61d89bd2c014fc735405",
+    "generator_license": "MIT",
+    "build_requirements": "tools/calendar-build-requirements.txt",
+    "build_requirements_sha256": "6cfa326d743d96c47739eedd1acafb642ce0abdb4dc91d256d05755e8908f4d8",
+    "build_input_policy": "download hash-pinned JPL and USNO inputs locally; do not commit source snapshots",
+    "runtime_implementation": "project-authored JavaScript lookup and traditional mapping",
+    "third_party_calendar_binary_at_runtime": false,
+    "event_time_field": "unix_ms_ut1_proxy",
+    "event_time_definition": "TT minus the frozen Delta T model, encoded as Unix milliseconds for a UT1-as-UTC comparison proxy; not unqualified exact historical UTC",
+    "tt_jd_stored": false,
+    "public_gregorian_input_range": "1901-01-01/2033-12-31",
+    "public_chinese_lunar_label_year_envelope": "1900-2033; both edge years are partial",
+    "first_accepted_nominal_lunar_label": {
+      "year": 1900,
+      "month": 11,
+      "day": 11,
+      "leap_month": false
+    },
+    "last_accepted_nominal_lunar_label": {
+      "year": 2033,
+      "month": 11,
+      "day": 10,
+      "leap_month": true
+    },
+    "lunar_edge_policy": "accept only a unique nominal label that converts inside 1901-01-01 through 2033-12-31",
+    "internal_calendar_frame_years": "1900-2034",
+    "context_event_range": "1900-01-01/2035-02-28",
+    "row_counts": {
+      "terms_including_context": 3244,
+      "lunar_months_including_context": 1657,
+      "lunar_uncertainty_events": 77
+    },
+    "schema_outline": {
+      "terms": [
+        "unix_ms_ut1_proxy",
+        "term_index",
+        "model_guard_seconds",
+        "delta_t_source_code"
+      ],
+      "lunar_months": [
+        "start_beijing_unix_day",
+        "lunar_year",
+        "month",
+        "leap_flag",
+        "length_days",
+        "start_unix_ms_ut1_proxy",
+        "start_midnight_margin_ms",
+        "start_model_guard_seconds",
+        "start_delta_t_source_code",
+        "uncertainty_flags"
+      ],
+      "lunar_month_uncertainty_flags_index": 9,
+      "lunar_uncertainty_events": [
+        "month_start_beijing_unix_day",
+        "event_type",
+        "event_unix_ms_ut1_proxy",
+        "term_index_or_minus_one",
+        "midnight_margin_ms",
+        "model_guard_seconds",
+        "delta_t_source_code",
+        "changes_calendar_assignment",
+        "alternative_beijing_day_delta"
+      ],
+      "lunar_uncertainty_event_source_code_index": 6,
+      "delta_t_source_codes": {
+        "0": "NASA_PRE1973",
+        "1": "USNO_MEASURED",
+        "2": "USNO_PREDICTED",
+        "3": "CONTINUOUS_LINEAR_SCENARIO"
+      }
+    },
+    "combined_guard_freeze_gate": {
+      "status": "PASS",
+      "method": "test the Cartesian product of new-moon and major-term alternative Beijing dates under their own event guards",
+      "failure_policy": "abort generation if any combination changes major-term month membership; explicit alternate month sequences would then be required before release",
+      "frozen_result": "major-term membership and the leap-month sequence remain unique under the combined guards; date-level uncertainty remains encoded"
+    }
+  },
+  "runtime_boundary_semantics": {
+    "solar_term_jie_guard": "one guarded Jie expands to before/after calendar_model_variant responses with source_case_id and solar_term_boundary_uncertainty",
+    "multiple_guarded_jie": "fail closed with CALENDAR_BOUNDARY_UNRESOLVED",
+    "gregorian_lunar_boundary": "return the nominal fixed-UTC+8 lunar value with boundary_uncertainty; unresolved_result_change_without_enumerated_variant prohibits treating the lunar label as unique",
+    "lunar_reverse_conversion": "fail closed only when the requested label is affected by an event model-guard crossing or explicit historical calendar-authority divergence; review-only events remain convertible"
+  },
+  "uncertainty_layers": [
+    {
+      "id": "user_boundary_guard",
+      "source": "rules.boundary_guard_seconds",
+      "meaning": "User-configured sensitivity/review band around chart boundaries.",
+      "not": "Not a calendar-data error estimate, confidence interval, or probability distribution."
+    },
+    {
+      "id": "dataset_event_model_guard",
+      "source": "model_guard_seconds stored per generated event",
+      "meaning": "Conservative event-level guard for the frozen Delta T/time-scale model.",
+      "segment_storage": "Every encoded event stores both its resulting guard and a Delta T source code.",
+      "segments": [
+        {
+          "source_code": "NASA_PRE1973",
+          "policy": "600 seconds",
+          "note": "Conservative historical calendar-construction/model guard and review band; not a claim of 600-second error for all dates."
+        },
+        {
+          "source_code": "USNO_MEASURED",
+          "policy": "2 seconds",
+          "note": "Small numerical/time-scale guard applied per event."
+        },
+        {
+          "source_code": "USNO_PREDICTED",
+          "policy": "ceiling of the published prediction error plus 2 seconds",
+          "note": "Uses the frozen published error column; not an empirical confidence interval."
+        },
+        {
+          "source_code": "CONTINUOUS_LINEAR_SCENARIO",
+          "policy": "10 seconds",
+          "note": "Post-2033.75 context-only engineering scenario, not an official prediction or confidence interval."
+        }
+      ]
+    },
+    {
+      "id": "hko_authority_divergence",
+      "source": "local comparison to HKO publication tables",
+      "meaning": "A date/convention disagreement between the frozen retrospective astronomical model and a publication-table authority.",
+      "not": "Not interchangeable with either the user boundary guard or the dataset event model guard; no HKO row is substituted into release data."
+    }
+  ],
+  "components": [
+    {
+      "name": "project-authored calendar runtime",
+      "version": "xuanshu-audit-v0.1",
+      "role": "offline lookup, lunisolar mapping, pillars, and traditional mappings over frozen data",
+      "license": "MIT",
+      "third_party_runtime_calendar_dependency": false
+    },
+    {
+      "name": "Skyfield",
+      "version": "1.54",
+      "role": "build-time astronomical event generation only",
+      "source": "https://github.com/skyfielders/python-skyfield/tree/1.54",
+      "license": "MIT",
+      "bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "jplephem",
+      "version": "2.24",
+      "role": "build-time JPL SPK reader dependency only",
+      "source": "https://pypi.org/project/jplephem/2.24/",
+      "license": "MIT",
+      "bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.1",
+      "role": "build-time numerical array dependency only",
+      "source": "https://pypi.org/project/numpy/2.5.1/",
+      "license_expression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "sgp4",
+      "version": "2.27",
+      "role": "build-time Skyfield dependency only; no satellite propagation is used by the generator",
+      "source": "https://pypi.org/project/sgp4/2.27/",
+      "license": "MIT",
+      "bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "JPL DE440s",
+      "role": "build-time ephemeris input only",
+      "source": "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440s.bsp",
+      "mirror": "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp",
+      "sha256": "c1c7feeab882263fc493a9d5a5b2ddd71b54826cdf65d8d17a76126b260a49f2",
+      "bundled": false,
+      "runtime_dependency": false,
+      "independent_validation_oracle": false
+    },
+    {
+      "name": "USNO deltat.data",
+      "role": "frozen measured Delta T source for build-time time-scale mapping",
+      "source": "https://maia.usno.navy.mil/ser7/deltat.data",
+      "sha256": "9f88e53593495a09219fe956eeadea0fa9f8e3e02c310b2aa2b70852383cdf6f",
+      "bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "USNO deltat.preds",
+      "role": "frozen published Delta T prediction/error source for build-time time-scale mapping",
+      "source": "https://maia.usno.navy.mil/ser7/deltat.preds",
+      "sha256": "5d864fddd30b2c64d2a86d3debbb25604eb5de44370c96bccf2abd5463f3db08",
+      "bundled": false,
+      "runtime_dependency": false,
+      "last_prediction_decimal_year": 2033.75
+    },
+    {
+      "name": "NASA Delta T polynomial expressions",
+      "role": "method description for independently implemented build-time polynomial segments",
+      "source": "https://eclipse.gsfc.nasa.gov/SEcat5/deltatpoly.html",
+      "source_text_bundled": false,
+      "runtime_dependency": false
+    },
+    {
+      "name": "Hong Kong Observatory Gregorian-Lunar Calendar Conversion Tables",
+      "role": "local date-level validation oracle only",
+      "source": "https://www.hko.gov.hk/en/gts/time/conversion.htm",
+      "text_table_locator": "https://www.hko.gov.hk/en/gts/time/conversion1_text.htm",
+      "bundled": false,
+      "table_or_row_text_bundled": false,
+      "complete_dataset_bundled": false,
+      "non_expressive_comparison_facts_bundled": 9,
+      "used_to_generate_calendar_mapping": false,
+      "used_to_generate_non_expressive_comparison_facts": true,
+      "final_release_data_rerun": {
+        "status": "PASS_WITH_DISCLOSED_DIVERGENCES",
+        "gregorian_day_rows_compared": 48578,
+        "solar_term_rows_compared": 3192,
+        "lunar_daily_row_divergences": 90,
+        "lunar_divergence_runs": 3,
+        "solar_term_date_divergences": 6,
+        "unexpected_divergences": 0
+      }
+    },
+    {
+      "name": "tyme4ts",
+      "version": "1.5.2",
+      "role": "MIT implementation lineage for four independently rewritten Dayun child-limit formulas only",
+      "source": "https://github.com/6tail/tyme4ts",
+      "audited_package": "https://registry.npmjs.org/tyme4ts/-/tyme4ts-1.5.2.tgz",
+      "license": "MIT",
+      "license_copy": "scripts/vendor/LICENSE-tyme4ts",
+      "audited_source_artifact": "tyme4ts@1.5.2 dist/lib/index.cjs",
+      "audited_source_artifact_sha256": "53d1665ecc8007689bb8de423d94934b4afa68e07fb1a65427a07375648625f8",
+      "audited_source_artifact_bundled": false,
+      "lineage_reference_classes": [
+        "DefaultChildLimitProvider",
+        "China95ChildLimitProvider",
+        "LunarSect1ChildLimitProvider",
+        "LunarSect2ChildLimitProvider"
+      ],
+      "bundled_binary": false,
+      "runtime_dependency": false,
+      "calendar_core": false
+    },
+    {
+      "name": "tzdata",
+      "python_distribution_version": "2026.3",
+      "iana_database_version": "2026c",
+      "role": "frozen IANA historical civil-time dependency",
+      "runtime_policy": "fail_closed_on_missing_or_mismatched_version; hash selected TZif file",
+      "system_zoneinfo_fallback": false
+    },
+    {
+      "name": "NOAA fractional-year equation-of-time approximation",
+      "role": "approximate local apparent-solar correction",
+      "source": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+      "source_notes": "NOAA labels the equation as an estimate; this release has not established its own maximum error bound.",
+      "independently_validated_error_bound_seconds": null
+    },
+    {
+      "name": "《穷通宝鉴》 historical work inspection locator",
+      "role": "limited experimental traditional rule registry",
+      "source": "https://zh.wikisource.org/w/index.php?oldid=2294674&title=%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4",
+      "revision_id": 2294674,
+      "inspected_at": "2026-08-07",
+      "rights_note": "The ancient underlying work is treated as public domain. The page revision is an audit locator only; no site transcription, editorial text, punctuation, or annotations are redistributed. Registry prose is independently written paraphrase."
+    }
+  ]
+}

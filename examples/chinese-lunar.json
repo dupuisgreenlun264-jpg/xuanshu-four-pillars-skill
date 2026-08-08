@@ -1,0 +1,17 @@
+{
+  "birth": {
+    "calendar": "chinese_lunar",
+    "lunar": {
+      "year": 2019,
+      "month": 12,
+      "day": 12,
+      "leap_month": false
+    },
+    "time": "11:22:00",
+    "timezone": "Asia/Shanghai"
+  },
+  "rules": {
+    "time_basis": "civil_clock",
+    "day_boundary": "both"
+  }
+}

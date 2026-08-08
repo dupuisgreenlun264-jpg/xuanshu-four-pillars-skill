@@ -1,0 +1,41 @@
+name: Calculation bug
+description: Report a reproducible calendrical, timezone, boundary, or candidate-set problem using synthetic data.
+title: "[bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not submit real names, addresses, birth certificates, event histories, or unredacted reports."
+  - type: textarea
+    id: input
+    attributes:
+      label: Minimal synthetic JSON input
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result and independent source
+      description: Name the exact convention, oracle version, and source location.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Engine, tzdb, Python, and Node versions
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: This report contains only synthetic or already-public calendar data.
+          required: true
