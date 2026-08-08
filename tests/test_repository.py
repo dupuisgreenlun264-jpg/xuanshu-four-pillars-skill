@@ -16,6 +16,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "analyze-four-pillars-rigorously"
+PLUGIN_MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
+MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 SCRIPTS = SKILL / "scripts"
 NODE_CORE = SCRIPTS / "four_pillars_core.js"
 CALENDAR_DATA = SCRIPTS / "data" / "calendar-1901-2033.json"
@@ -107,6 +109,8 @@ class RepositoryTests(unittest.TestCase):
 
     def test_required_skill_and_clean_core_files_exist(self) -> None:
         required = [
+            PLUGIN_MANIFEST,
+            MARKETPLACE,
             SKILL / "SKILL.md",
             SKILL / "agents" / "openai.yaml",
             SCRIPTS / "four_pillars_engine.py",
@@ -122,6 +126,51 @@ class RepositoryTests(unittest.TestCase):
         ]
         for path in required:
             self.assertTrue(path.is_file(), path)
+
+    def test_plugin_manifest_and_marketplace_contract(self) -> None:
+        manifest = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual("xuanshu-four-pillars", manifest["name"])
+        self.assertEqual("0.1.0", manifest["version"])
+        self.assertEqual("MIT", manifest["license"])
+        self.assertEqual(
+            "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+            manifest["repository"],
+        )
+        self.assertEqual("./skills/", manifest["skills"])
+        self.assertNotIn("mcpServers", manifest)
+        self.assertNotIn("apps", manifest)
+        self.assertNotIn("hooks", manifest)
+
+        skills_root = (ROOT / manifest["skills"]).resolve()
+        self.assertTrue(skills_root.is_relative_to(ROOT.resolve()))
+        self.assertTrue((skills_root / "analyze-four-pillars-rigorously" / "SKILL.md").is_file())
+
+        interface = manifest["interface"]
+        self.assertEqual("玄枢·严谨四柱", interface["displayName"])
+        self.assertEqual("Productivity", interface["category"])
+        self.assertRegex(interface["brandColor"], r"^#[0-9A-Fa-f]{6}$")
+        self.assertGreaterEqual(len(interface["defaultPrompt"]), 3)
+        self.assertIn("开发验证版", interface["longDescription"])
+        self.assertIn("不提供经科学验证的人生预测", interface["longDescription"])
+
+        marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+        self.assertEqual("xuanshu-plugins", marketplace["name"])
+        self.assertEqual(1, len(marketplace["plugins"]))
+        entry = marketplace["plugins"][0]
+        self.assertEqual(manifest["name"], entry["name"])
+        self.assertEqual(interface["category"], entry["category"])
+        self.assertEqual(
+            {
+                "source": "url",
+                "url": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+                "ref": "main",
+            },
+            entry["source"],
+        )
+        self.assertEqual(
+            {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+            entry["policy"],
+        )
 
     def test_frozen_clean_core_artifact_hashes(self) -> None:
         for path, expected in EXPECTED_ARTIFACT_SHA256.items():
@@ -433,6 +482,7 @@ class RepositoryTests(unittest.TestCase):
     def test_release_version_consistency(self) -> None:
         version = "0.1.0"
         expected = {
+            PLUGIN_MANIFEST: f'"version": "{version}"',
             ROOT / "README.md": f"当前版本：`{version}`",
             ROOT / "CHANGELOG.md": f"## {version}",
             ROOT / "NOTICE": f"Xuanshu Four Pillars Skill {version}",

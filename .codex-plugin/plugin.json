@@ -1,0 +1,34 @@
+{
+  "name": "xuanshu-four-pillars",
+  "version": "0.1.0",
+  "description": "Auditable Four Pillars calculation and source-constrained traditional cultural interpretation.",
+  "author": {
+    "name": "Xuanshu Four Pillars contributors",
+    "url": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill"
+  },
+  "homepage": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+  "repository": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+  "license": "MIT",
+  "keywords": [
+    "four-pillars",
+    "sizhu",
+    "calendar",
+    "timezone",
+    "traditional-culture"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "玄枢·严谨四柱",
+    "shortDescription": "可审计四柱计算与传统文化解读",
+    "longDescription": "使用冻结历法、历史时区、边界候选与来源约束生成可复现的四柱报告；开发验证版，不提供经科学验证的人生预测。",
+    "developerName": "Xuanshu Four Pillars contributors",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/dupuisgreenlun264-jpg/xuanshu-four-pillars-skill",
+    "defaultPrompt": [
+      "生成一份普通版和专业版并列的可审计四柱报告。",
+      "比较子时换日流派，并明确哪些柱发生变化。",
+      "解释这套四柱引擎的计算边界、来源和未认证项。"
+    ],
+    "brandColor": "#101828"
+  }
+}

@@ -2,6 +2,7 @@
 
 ## 0.1.0 — 2026-08-08
 
+- Added an installable skills-only ChatGPT/Codex Plugin manifest and a Git-backed repository Marketplace entry, with matching release gates and desktop installation instructions.
 - Added a deterministic, offline chart engine implemented in project-owned JavaScript around a hash-verified frozen `calendar-1901-2033.json` data file.
 - Added a reproducible build-time data path based on Skyfield 1.54, JPL DE440s, frozen USNO Delta T records/predictions, and independently implemented NASA Delta T polynomial segments. Build inputs are recorded by source and SHA-256; the ephemeris kernel and build dependencies are not runtime artifacts.
 - Froze `xuanshu-calendar-data-v0.2`, including per-event Delta T source codes, lunar row flags at `row[9]`, uncertainty-event source codes at `row[6]`, segment continuity diagnostics, and a combined new-moon/major-term guard gate.
